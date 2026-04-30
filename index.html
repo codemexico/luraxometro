@@ -3,55 +3,41 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="favicon.png">
 <title>Luraxómetro — Live Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
 <style>
+  @import url('https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,600;1,400&display=swap');
+
   :root {
-    --tec-navy: #1C3F6E;
-    --tec-blue: #00599E;
-    --tec-sky: #008DBA;
-    --tec-accent: #00C9DB;
-    --tec-green: #28804A;
-    --tec-red: #B3291F;
-    --tec-yellow: #E8A317;
-    --bg-deep: #0B1929;
-    --bg-card: #12263A;
-    --bg-card-hover: #183352;
-    --text-primary: #E8EFF6;
-    --text-secondary: #8BA4BE;
-    --text-muted: #4F6D8A;
-    --border: rgba(0, 141, 186, 0.15);
-    --glow-sky: rgba(0, 141, 186, 0.35);
+    --claude-orange: #E07A3A;
+    --claude-amber: #D4863C;
+    --claude-deep: #C46A2F;
+    --claude-warm: #F5E6D3;
+    --claude-cream: #FAF6F1;
+    --green: #2E8B57;
+    --red: #C0392B;
+    --yellow: #D4A017;
+    --bg: #FDFCFA;
+    --bg-card: #FFFFFF;
+    --bg-input: #F7F4F0;
+    --text: #1A1A1A;
+    --text-secondary: #5C5549;
+    --text-muted: #9B9286;
+    --border: #E8E2DA;
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
 
   body {
-    font-family: 'DM Sans', sans-serif;
-    background: var(--bg-deep);
-    color: var(--text-primary);
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
     min-height: 100vh;
-    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
   }
 
-  /* Animated background grid */
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    background:
-      linear-gradient(rgba(0,89,158,0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0,89,158,0.03) 1px, transparent 1px);
-    background-size: 60px 60px;
-    pointer-events: none;
-    z-index: 0;
-  }
+  .app { max-width: 1200px; margin: 0 auto; padding: 2.5rem 2rem; }
 
-  .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
-
-  /* Header */
   header {
     display: flex;
     align-items: center;
@@ -59,244 +45,220 @@
     margin-bottom: 2.5rem;
     flex-wrap: wrap;
     gap: 1rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 2px solid var(--text);
   }
 
-  .logo-group { display: flex; align-items: center; gap: 1rem; }
+  .logo-group { display: flex; align-items: center; gap: 0.9rem; }
 
   .logo-icon {
-    width: 48px; height: 48px;
-    background: linear-gradient(135deg, var(--tec-sky), var(--tec-accent));
-    border-radius: 12px;
+    width: 44px; height: 44px;
+    background: var(--claude-orange);
+    border-radius: 10px;
     display: grid; place-items: center;
-    font-size: 1.5rem;
-    box-shadow: 0 0 24px var(--glow-sky);
-    animation: pulse-glow 3s ease-in-out infinite;
-  }
-
-  @keyframes pulse-glow {
-    0%, 100% { box-shadow: 0 0 24px var(--glow-sky); }
-    50% { box-shadow: 0 0 40px var(--glow-sky), 0 0 60px rgba(0,201,219,0.15); }
+    font-size: 1.4rem;
   }
 
   .logo-text h1 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.6rem;
+    font-size: 1.7rem;
     font-weight: 700;
-    background: linear-gradient(135deg, var(--text-primary), var(--tec-accent));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    letter-spacing: -0.5px;
+    color: var(--text);
+    letter-spacing: -0.6px;
   }
-
   .logo-text p {
-    font-size: 0.78rem;
+    font-size: 0.72rem;
     color: var(--text-muted);
-    letter-spacing: 2px;
+    letter-spacing: 3px;
     text-transform: uppercase;
+    font-weight: 500;
   }
 
   .connection-status {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 500;
     color: var(--text-secondary);
-    background: var(--bg-card);
+    background: var(--bg-input);
     border: 1px solid var(--border);
-    padding: 0.5rem 1rem;
-    border-radius: 8px;
+    padding: 0.45rem 1rem;
+    border-radius: 6px;
   }
 
   .status-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--tec-red);
-    transition: background 0.4s;
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red);
+    transition: background 0.3s;
   }
-  .status-dot.live { background: var(--tec-green); box-shadow: 0 0 8px rgba(40,128,74,0.6); }
+  .status-dot.live { background: var(--green); box-shadow: 0 0 6px rgba(46,139,87,0.5); }
 
-  /* Config panel */
   .config-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
     margin-bottom: 2rem;
     display: flex;
     align-items: flex-end;
-    gap: 1.5rem;
+    gap: 1.25rem;
     flex-wrap: wrap;
   }
 
-  .config-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .config-field { display: flex; flex-direction: column; gap: 0.3rem; }
   .config-field label {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
     letter-spacing: 1.5px;
     color: var(--text-muted);
     font-weight: 600;
   }
   .config-field input {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.85rem;
-    background: var(--bg-deep);
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
+    font-size: 0.82rem;
+    background: var(--bg-input);
     border: 1px solid var(--border);
-    color: var(--text-primary);
-    padding: 0.55rem 0.8rem;
-    border-radius: 8px;
+    color: var(--text);
+    padding: 0.5rem 0.7rem;
+    border-radius: 5px;
     outline: none;
     transition: border-color 0.2s;
-    width: 200px;
+    width: 190px;
   }
-  .config-field input:focus { border-color: var(--tec-sky); }
+  .config-field input:focus { border-color: var(--claude-orange); }
   .config-field input::placeholder { color: var(--text-muted); }
 
   .btn-connect {
-    font-family: 'DM Sans', sans-serif;
+    font-family: 'Helvetica Neue', Helvetica, sans-serif;
     font-weight: 600;
-    font-size: 0.85rem;
-    padding: 0.55rem 1.5rem;
+    font-size: 0.82rem;
+    padding: 0.5rem 1.6rem;
     border: none;
-    border-radius: 8px;
+    border-radius: 5px;
     cursor: pointer;
-    background: linear-gradient(135deg, var(--tec-sky), var(--tec-blue));
-    color: white;
-    transition: transform 0.15s, box-shadow 0.2s;
+    background: var(--claude-orange);
+    color: #fff;
+    transition: background 0.15s;
     white-space: nowrap;
   }
-  .btn-connect:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--glow-sky); }
+  .btn-connect:hover { background: var(--claude-deep); }
 
-  /* Metric cards row */
+  /* ── Metrics ──────────────────────────────────── */
   .metrics {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 1.25rem;
+    gap: 1.2rem;
     margin-bottom: 2rem;
   }
 
   .metric-card {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
+    border-radius: 8px;
+    padding: 1.4rem 1.5rem;
     position: relative;
-    overflow: hidden;
-    transition: border-color 0.3s, transform 0.2s;
+    transition: border-color 0.25s;
   }
-  .metric-card:hover { border-color: var(--tec-sky); transform: translateY(-2px); }
+  .metric-card:hover { border-color: var(--claude-amber); }
 
-  .metric-card::before {
+  .metric-card::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0;
-    height: 3px;
-    background: linear-gradient(90deg, var(--tec-sky), var(--tec-accent));
+    top: 0; left: 0;
+    width: 4px; height: 100%;
+    background: var(--claude-orange);
+    border-radius: 8px 0 0 8px;
     opacity: 0;
-    transition: opacity 0.3s;
+    transition: opacity 0.25s;
   }
-  .metric-card:hover::before { opacity: 1; }
+  .metric-card:hover::after { opacity: 1; }
 
   .metric-label {
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     text-transform: uppercase;
     letter-spacing: 2px;
     color: var(--text-muted);
     font-weight: 600;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.45rem;
   }
 
   .metric-value {
-    font-family: 'JetBrains Mono', monospace;
     font-size: 2rem;
     font-weight: 700;
-    color: var(--text-primary);
-    line-height: 1;
+    color: var(--text);
+    line-height: 1.1;
   }
   .metric-value .unit {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     color: var(--text-secondary);
     font-weight: 400;
-    margin-left: 0.3rem;
+    margin-left: 0.25rem;
   }
 
   .metric-sub {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    margin-top: 0.5rem;
-    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.45rem;
   }
 
-  /* Status indicator card */
-  .status-card {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-  }
+  .status-card { display: flex; align-items: center; gap: 0.9rem; }
 
   .status-lamp {
-    width: 40px; height: 40px;
+    width: 36px; height: 36px;
     border-radius: 50%;
     background: var(--text-muted);
-    transition: background 0.4s, box-shadow 0.4s;
+    border: 2px solid var(--border);
+    transition: all 0.35s;
     flex-shrink: 0;
   }
-  .status-lamp.ok { background: #34D058; box-shadow: 0 0 20px rgba(52,208,88,0.4); }
-  .status-lamp.high { background: #F85149; box-shadow: 0 0 20px rgba(248,81,73,0.4); }
-  .status-lamp.low { background: #F0C040; box-shadow: 0 0 20px rgba(240,192,64,0.4); }
+  .status-lamp.ok { background: var(--green); border-color: var(--green); box-shadow: 0 0 14px rgba(46,139,87,0.35); }
+  .status-lamp.high { background: var(--red); border-color: var(--red); box-shadow: 0 0 14px rgba(192,57,43,0.35); }
+  .status-lamp.low { background: var(--yellow); border-color: var(--yellow); box-shadow: 0 0 14px rgba(212,160,23,0.35); }
 
-  .status-text {
-    font-weight: 700;
-    font-size: 1.4rem;
-  }
+  .status-text { font-weight: 700; font-size: 1.35rem; }
 
-  /* Chart panels */
   .chart-section {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1.25rem;
+    gap: 1.2rem;
     margin-bottom: 2rem;
   }
 
   .chart-panel {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
+    border-radius: 8px;
+    padding: 1.4rem 1.5rem;
   }
 
   .chart-panel h3 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
+    font-family: 'EB Garamond', 'Georgia', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--text);
+    margin-bottom: 0.8rem;
   }
 
-  .chart-container { position: relative; width: 100%; height: 300px; }
+  .chart-container { position: relative; width: 100%; height: 310px; }
 
-  /* Feed log */
   .feed-log {
     background: var(--bg-card);
     border: 1px solid var(--border);
-    border-radius: 14px;
-    padding: 1.5rem;
+    border-radius: 8px;
+    padding: 1.4rem 1.5rem;
   }
 
   .feed-log h3 {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 1.5px;
-    color: var(--text-secondary);
-    margin-bottom: 1rem;
+    font-family: 'EB Garamond', 'Georgia', serif;
+    font-size: 1.05rem;
+    font-weight: 600;
+    font-style: italic;
+    color: var(--text);
+    margin-bottom: 0.8rem;
   }
 
   .log-table {
     width: 100%;
     border-collapse: collapse;
-    font-family: 'JetBrains Mono', monospace;
     font-size: 0.78rem;
   }
   .log-table th {
@@ -304,57 +266,63 @@
     color: var(--text-muted);
     font-weight: 600;
     padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 2px solid var(--text);
     text-transform: uppercase;
     letter-spacing: 1px;
-    font-size: 0.68rem;
+    font-size: 0.65rem;
   }
   .log-table td {
-    padding: 0.55rem 0.75rem;
-    border-bottom: 1px solid rgba(0,141,186,0.06);
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
     color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
   }
-  .log-table tr:hover td { color: var(--text-primary); background: var(--bg-card-hover); }
+  .log-table tr:hover td { color: var(--text); background: var(--claude-cream); }
 
   .badge {
     display: inline-block;
-    padding: 0.15rem 0.5rem;
-    border-radius: 4px;
-    font-size: 0.68rem;
+    padding: 0.12rem 0.55rem;
+    border-radius: 3px;
+    font-size: 0.65rem;
     font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
-  .badge.ok { background: rgba(52,208,88,0.15); color: #34D058; }
-  .badge.high { background: rgba(248,81,73,0.15); color: #F85149; }
-  .badge.low { background: rgba(240,192,64,0.15); color: #F0C040; }
+  .badge.ok { background: rgba(46,139,87,0.1); color: var(--green); }
+  .badge.high { background: rgba(192,57,43,0.1); color: var(--red); }
+  .badge.low { background: rgba(212,160,23,0.12); color: #B8860B; }
 
   footer {
     text-align: center;
-    padding: 2rem 0 1rem;
+    padding: 2.5rem 0 1rem;
     color: var(--text-muted);
-    font-size: 0.75rem;
-    letter-spacing: 1px;
+    font-size: 0.72rem;
+    letter-spacing: 0.5px;
+    border-top: 1px solid var(--border);
+    margin-top: 1rem;
   }
-  footer a { color: var(--tec-sky); text-decoration: none; }
+  footer a { color: var(--claude-orange); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
 
-  /* Responsive */
   @media (max-width: 768px) {
     .chart-section { grid-template-columns: 1fr; }
     .config-panel { flex-direction: column; align-items: stretch; }
     .config-field input { width: 100%; }
     .metric-value { font-size: 1.5rem; }
+    .app { padding: 1.5rem 1rem; }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 <body>
 <div class="app">
 
   <header>
     <div class="logo-group">
-      <div class="logo-icon">💡</div>
       <div class="logo-text">
         <h1>Luraxómetro</h1>
-        <p>Luminance Monitor</p>
+        <p>Sensor de luminancia</p>
       </div>
     </div>
     <div class="connection-status">
@@ -363,7 +331,6 @@
     </div>
   </header>
 
-  <!-- Config -->
   <div class="config-panel">
     <div class="config-field">
       <label>Channel ID</label>
@@ -374,61 +341,58 @@
       <input type="text" id="apiKey" placeholder="ej. ABCD1234EFGH5678">
     </div>
     <div class="config-field">
-      <label>Min (cd/m²)</label>
+      <label>Min (nits)</label>
       <input type="number" id="threshMin" value="80" step="1">
     </div>
     <div class="config-field">
-      <label>Max (cd/m²)</label>
+      <label>Max (nits)</label>
       <input type="number" id="threshMax" value="110" step="1">
     </div>
     <button class="btn-connect" id="btnConnect">Conectar</button>
   </div>
 
-  <!-- Metrics -->
   <div class="metrics">
     <div class="metric-card">
       <div class="metric-label">LDR Sensor</div>
-      <div class="metric-value" id="ldrValue">—<span class="unit">cd/m²</span></div>
+      <div class="metric-value" id="ldrValue">—<span class="unit">nits</span></div>
       <div class="metric-sub" id="ldrSub">Esperando datos…</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">VEML7700 Precision</div>
-      <div class="metric-value" id="vemlValue">—<span class="unit">cd/m²</span></div>
+      <div class="metric-value" id="vemlValue">—<span class="unit">nits</span></div>
       <div class="metric-sub" id="vemlSub">Esperando datos…</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Δ Sensores</div>
-      <div class="metric-value" id="deltaValue">—<span class="unit">cd/m²</span></div>
+      <div class="metric-value" id="deltaValue">—<span class="unit">nits</span></div>
       <div class="metric-sub" id="deltaSub">|LDR − VEML|</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Estado</div>
       <div class="status-card">
         <div class="status-lamp" id="statusLamp"></div>
-        <div class="status-text" id="statusWord">Standby</div>
+        <div class="status-text" id="statusWord">OK</div>
       </div>
-      <div class="metric-sub" id="statusRange">Rango: 80 – 110 cd/m²</div>
+      <div class="metric-sub" id="statusRange">Rango: 80 – 110 nits</div>
     </div>
   </div>
 
-  <!-- Charts -->
   <div class="chart-section">
     <div class="chart-panel">
-      <h3>Serie de Tiempo</h3>
+      <h2>Lecturas de luminancia</h2>
       <div class="chart-container"><canvas id="timeChart"></canvas></div>
     </div>
     <div class="chart-panel">
-      <h3>Comparación de Sensores</h3>
+      <h2>Comparación de sensores</h2>
       <div class="chart-container"><canvas id="compChart"></canvas></div>
     </div>
   </div>
 
-  <!-- Feed log -->
   <div class="feed-log">
-    <h3>Últimas lecturas</h3>
+    <h2>Últimas lecturas</h2>
     <table class="log-table">
       <thead>
-        <tr><th>Hora</th><th>LDR (cd/m²)</th><th>VEML (cd/m²)</th><th>Estado</th></tr>
+        <tr><th>Hora</th><th>LDR (nits)</th><th>VEML (nits)</th><th>Estado</th></tr>
       </thead>
       <tbody id="logBody"></tbody>
     </table>
@@ -449,20 +413,61 @@ let threshMax = 110;
 let lastEntryId = null;
 
 const MAX_POINTS = 200;
-const POLL_INTERVAL = 16000; // 16s (ThingSpeak free ≥ 15s)
+const POLL_INTERVAL = 16000;
 
 const timeData = { labels: [], ldr: [], veml: [] };
 const compData = { ldr: [], veml: [] };
 
-// ─── DOM refs ──────────────────────────────────────────
 const $ = id => document.getElementById(id);
 
-// ─── Charts ────────────────────────────────────────────
-Chart.defaults.color = '#8BA4BE';
-Chart.defaults.borderColor = 'rgba(0,141,186,0.1)';
-Chart.defaults.font.family = "'JetBrains Mono', monospace";
-Chart.defaults.font.size = 11;
+// ─── LaTeX-style Chart.js config ───────────────────────
+const LX = {
+  orange: '#E07A3A',
+  blue:   '#2B6CB0',
+  grid:   '#D6D0C8',
+  axis:   '#1A1A1A',
+  tick:   '#3D3D3D',
+  serif:  "'EB Garamond', Georgia, 'Times New Roman', serif",
+  sans:   "'Helvetica Neue', Helvetica, sans-serif",
+};
 
+Chart.defaults.color = LX.tick;
+Chart.defaults.borderColor = LX.grid;
+Chart.defaults.font.family = LX.sans;
+Chart.defaults.font.size = 12;
+
+function lxScales(xLabel, yLabel) {
+  return {
+    x: {
+      title: { display: true, text: xLabel, font: { family: LX.serif, size: 14, style: 'italic' }, color: LX.axis },
+      ticks: { color: LX.tick, font: { size: 11 }, maxTicksLimit: 8 },
+      grid: { color: LX.grid, lineWidth: 0.5, drawTicks: true, tickLength: 6 },
+      border: { color: LX.axis, width: 1.4 },
+    },
+    y: {
+      title: { display: true, text: yLabel, font: { family: LX.serif, size: 14, style: 'italic' }, color: LX.axis },
+      ticks: { color: LX.tick, font: { size: 11 } },
+      grid: { color: LX.grid, lineWidth: 0.5, drawTicks: true, tickLength: 6 },
+      border: { color: LX.axis, width: 1.4 },
+      beginAtZero: false,
+    }
+  };
+}
+
+function lxLegend() {
+  return {
+    position: 'top',
+    labels: {
+      font: { family: LX.serif, size: 13 },
+      color: LX.axis,
+      usePointStyle: true,
+      pointStyle: 'rectRounded',
+      padding: 18,
+    }
+  };
+}
+
+// ─── Time series chart ─────────────────────────────────
 const timeChart = new Chart($('timeChart'), {
   type: 'line',
   data: {
@@ -471,22 +476,28 @@ const timeChart = new Chart($('timeChart'), {
       {
         label: 'LDR',
         data: [],
-        borderColor: '#008DBA',
-        backgroundColor: 'rgba(0,141,186,0.08)',
-        borderWidth: 2,
-        pointRadius: 2,
-        fill: true,
-        tension: 0.3,
+        borderColor: LX.orange,
+        backgroundColor: 'transparent',
+        borderWidth: 1.8,
+        pointRadius: 2.5,
+        pointBackgroundColor: LX.orange,
+        pointBorderColor: LX.orange,
+        pointStyle: 'circle',
+        fill: false,
+        tension: 0,
       },
       {
         label: 'VEML7700',
         data: [],
-        borderColor: '#00C9DB',
-        backgroundColor: 'rgba(0,201,219,0.06)',
-        borderWidth: 2,
-        pointRadius: 2,
-        fill: true,
-        tension: 0.3,
+        borderColor: LX.blue,
+        backgroundColor: 'transparent',
+        borderWidth: 1.8,
+        pointRadius: 2.5,
+        pointBackgroundColor: LX.blue,
+        pointBorderColor: LX.blue,
+        pointStyle: 'rectRot',
+        fill: false,
+        tension: 0,
       }
     ]
   },
@@ -494,17 +505,13 @@ const timeChart = new Chart($('timeChart'), {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
-    scales: {
-      x: { title: { display: true, text: 'Hora' }, ticks: { maxTicksLimit: 8 } },
-      y: { title: { display: true, text: 'cd/m²' }, beginAtZero: false }
-    },
-    plugins: {
-      legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle' } },
-      annotation: {} // thresholds drawn manually
-    }
+    scales: lxScales('Hora', 'Luminancia [cd/m²]'),
+    plugins: { legend: lxLegend() },
+    animation: { duration: 0 },
   }
 });
 
+// ─── Comparison scatter chart ──────────────────────────
 const compChart = new Chart($('compChart'), {
   type: 'scatter',
   data: {
@@ -512,17 +519,19 @@ const compChart = new Chart($('compChart'), {
       {
         label: 'Mediciones',
         data: [],
-        backgroundColor: 'rgba(0,201,219,0.6)',
-        borderColor: '#00C9DB',
+        backgroundColor: LX.orange,
+        borderColor: LX.orange,
         pointRadius: 4,
+        pointStyle: 'circle',
+        pointBorderWidth: 1,
       },
       {
-        label: 'Ideal 1:1',
+        label: 'Ideal (1:1)',
         data: [],
         type: 'line',
-        borderColor: 'rgba(255,255,255,0.25)',
-        borderDash: [6, 4],
-        borderWidth: 1.5,
+        borderColor: LX.axis,
+        borderDash: [8, 5],
+        borderWidth: 1.2,
         pointRadius: 0,
         fill: false,
       }
@@ -531,17 +540,13 @@ const compChart = new Chart($('compChart'), {
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    scales: {
-      x: { title: { display: true, text: 'LDR (cd/m²)' } },
-      y: { title: { display: true, text: 'VEML7700 (cd/m²)' } }
-    },
-    plugins: {
-      legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle' } }
-    }
+    scales: lxScales('LDR [cd/m²]', 'VEML7700 [cd/m²]'),
+    plugins: { legend: lxLegend() },
+    animation: { duration: 0 },
   }
 });
 
-// ─── Helpers ───────────────────────────────────────────
+// ─── Helpers (logic unchanged) ─────────────────────────
 function evaluateStatus(veml) {
   if (veml > threshMax) return { status: 'high', label: 'Alto', cls: 'high' };
   if (veml < threshMin) return { status: 'low', label: 'Bajo', cls: 'low' };
@@ -561,7 +566,6 @@ function updateIdealLine() {
   compChart.data.datasets[1].data = [{ x: lo, y: lo }, { x: hi, y: hi }];
 }
 
-// ─── Feed parsing ──────────────────────────────────────
 async function fetchFeeds(numResults) {
   let url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?results=${numResults}`;
   if (apiKey) url += `&api_key=${apiKey}`;
@@ -585,7 +589,6 @@ async function pollOnce() {
     const { label, cls } = evaluateStatus(veml);
     const delta = Math.abs(ldr - veml);
 
-    // Update metric cards
     $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">cd/m²</span>`;
     $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">cd/m²</span>`;
     $('deltaValue').innerHTML = `${delta.toFixed(2)}<span class="unit">cd/m²</span>`;
@@ -595,7 +598,6 @@ async function pollOnce() {
     $('statusLamp').className = `status-lamp ${cls}`;
     $('statusWord').textContent = label;
 
-    // Time chart
     timeData.labels.push(timeLabel);
     timeData.ldr.push(ldr);
     timeData.veml.push(veml);
@@ -607,7 +609,6 @@ async function pollOnce() {
     timeChart.data.datasets[1].data = timeData.veml;
     timeChart.update('none');
 
-    // Comp chart
     compData.ldr.push(ldr);
     compData.veml.push(veml);
     if (compData.ldr.length > MAX_POINTS) { compData.ldr.shift(); compData.veml.shift(); }
@@ -615,13 +616,11 @@ async function pollOnce() {
     updateIdealLine();
     compChart.update('none');
 
-    // Log table (prepend, max 20 rows)
     const tbody = $('logBody');
     const row = tbody.insertRow(0);
     row.innerHTML = `<td>${timeLabel}</td><td>${ldr.toFixed(4)}</td><td>${veml.toFixed(4)}</td><td><span class="badge ${cls}">${label}</span></td>`;
     while (tbody.rows.length > 20) tbody.deleteRow(tbody.rows.length - 1);
 
-    // Connection status
     $('statusDot').classList.add('live');
     $('statusText').textContent = `Live · ${timeLabel}`;
 
@@ -632,7 +631,6 @@ async function pollOnce() {
   }
 }
 
-// ─── Backfill on connect ───────────────────────────────
 async function backfill() {
   try {
     const json = await fetchFeeds(50);
@@ -648,18 +646,14 @@ async function backfill() {
       timeData.veml.push(veml);
       compData.ldr.push(ldr);
       compData.veml.push(veml);
-
-      // Log the last 20
       lastEntryId = feed.entry_id;
     }
 
-    // Trim
     while (timeData.labels.length > MAX_POINTS) {
       timeData.labels.shift(); timeData.ldr.shift(); timeData.veml.shift();
     }
     while (compData.ldr.length > MAX_POINTS) { compData.ldr.shift(); compData.veml.shift(); }
 
-    // Update charts
     timeChart.data.labels = timeData.labels;
     timeChart.data.datasets[0].data = timeData.ldr;
     timeChart.data.datasets[1].data = timeData.veml;
@@ -669,7 +663,6 @@ async function backfill() {
     updateIdealLine();
     compChart.update();
 
-    // Populate last entries in log
     const tbody = $('logBody');
     const recent = feeds.slice(-20);
     for (const feed of recent) {
@@ -681,7 +674,6 @@ async function backfill() {
       row.innerHTML = `<td>${formatTime(feed.created_at)}</td><td>${ldr.toFixed(4)}</td><td>${veml.toFixed(4)}</td><td><span class="badge ${cls}">${label}</span></td>`;
     }
 
-    // Set current values
     if (feeds.length > 0) {
       const last = feeds[feeds.length - 1];
       const ldr = parseFloat(last.field1);
@@ -703,7 +695,6 @@ async function backfill() {
   }
 }
 
-// ─── Connect button ────────────────────────────────────
 $('btnConnect').addEventListener('click', async () => {
   channelId = $('channelId').value.trim();
   apiKey = $('apiKey').value.trim();
@@ -713,7 +704,6 @@ $('btnConnect').addEventListener('click', async () => {
 
   if (!channelId) { alert('Ingresa un Channel ID'); return; }
 
-  // Reset
   if (polling) clearInterval(polling);
   timeData.labels = []; timeData.ldr = []; timeData.veml = [];
   compData.ldr = []; compData.veml = [];
@@ -725,7 +715,6 @@ $('btnConnect').addEventListener('click', async () => {
   polling = setInterval(pollOnce, POLL_INTERVAL);
 });
 
-// ─── Save config in URL hash ───────────────────────────
 function loadFromHash() {
   const params = new URLSearchParams(window.location.hash.slice(1));
   if (params.get('ch')) $('channelId').value = params.get('ch');
