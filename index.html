@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luraxómetro — Live Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
+<style>
+  :root {
+    --tec-navy: #1C3F6E;
+    --tec-blue: #00599E;
+    --tec-sky: #008DBA;
+    --tec-accent: #00C9DB;
+    --tec-green: #28804A;
+    --tec-red: #B3291F;
+    --tec-yellow: #E8A317;
+    --bg-deep: #0B1929;
+    --bg-card: #12263A;
+    --bg-card-hover: #183352;
+    --text-primary: #E8EFF6;
+    --text-secondary: #8BA4BE;
+    --text-muted: #4F6D8A;
+    --border: rgba(0, 141, 186, 0.15);
+    --glow-sky: rgba(0, 141, 186, 0.35);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      linear-gradient(rgba(0,89,158,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,89,158,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* Header */
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .logo-group { display: flex; align-items: center; gap: 1rem; }
+
+  .logo-icon {
+    width: 48px; height: 48px;
+    background: linear-gradient(135deg, var(--tec-sky), var(--tec-accent));
+    border-radius: 12px;
+    display: grid; place-items: center;
+    font-size: 1.5rem;
+    box-shadow: 0 0 24px var(--glow-sky);
+    animation: pulse-glow 3s ease-in-out infinite;
+  }
+
+  @keyframes pulse-glow {
+    0%, 100% { box-shadow: 0 0 24px var(--glow-sky); }
+    50% { box-shadow: 0 0 40px var(--glow-sky), 0 0 60px rgba(0,201,219,0.15); }
+  }
+
+  .logo-text h1 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--text-primary), var(--tec-accent));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text p {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+
+  .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--tec-red);
+    transition: background 0.4s;
+  }
+  .status-dot.live { background: var(--tec-green); box-shadow: 0 0 8px rgba(40,128,74,0.6); }
+
+  /* Config panel */
+  .config-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    align-items: flex-end;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .config-field { display: flex; flex-direction: column; gap: 0.35rem; }
+  .config-field label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+  .config-field input {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    padding: 0.55rem 0.8rem;
+    border-radius: 8px;
+    outline: none;
+    transition: border-color 0.2s;
+    width: 200px;
+  }
+  .config-field input:focus { border-color: var(--tec-sky); }
+  .config-field input::placeholder { color: var(--text-muted); }
+
+  .btn-connect {
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 0.55rem 1.5rem;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--tec-sky), var(--tec-blue));
+    color: white;
+    transition: transform 0.15s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+  .btn-connect:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--glow-sky); }
+
+  /* Metric cards row */
+  .metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .metric-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .metric-card:hover { border-color: var(--tec-sky); transform: translateY(-2px); }
+
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--tec-sky), var(--tec-accent));
+    opacity: 0;
+    transition: opacity 0.3s;
+  }
+  .metric-card:hover::before { opacity: 1; }
+
+  .metric-label {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--text-muted);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+
+  .metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1;
+  }
+  .metric-value .unit {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 400;
+    margin-left: 0.3rem;
+  }
+
+  .metric-sub {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  /* Status indicator card */
+  .status-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .status-lamp {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: var(--text-muted);
+    transition: background 0.4s, box-shadow 0.4s;
+    flex-shrink: 0;
+  }
+  .status-lamp.ok { background: #34D058; box-shadow: 0 0 20px rgba(52,208,88,0.4); }
+  .status-lamp.high { background: #F85149; box-shadow: 0 0 20px rgba(248,81,73,0.4); }
+  .status-lamp.low { background: #F0C040; box-shadow: 0 0 20px rgba(240,192,64,0.4); }
+
+  .status-text {
+    font-weight: 700;
+    font-size: 1.4rem;
+  }
+
+  /* Chart panels */
+  .chart-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .chart-panel {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  .chart-panel h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+
+  .chart-container { position: relative; width: 100%; height: 300px; }
+
+  /* Feed log */
+  .feed-log {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.5rem;
+  }
+
+  .feed-log h3 {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+  }
+
+  .log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+  }
+  .log-table th {
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-size: 0.68rem;
+  }
+  .log-table td {
+    padding: 0.55rem 0.75rem;
+    border-bottom: 1px solid rgba(0,141,186,0.06);
+    color: var(--text-secondary);
+  }
+  .log-table tr:hover td { color: var(--text-primary); background: var(--bg-card-hover); }
+
+  .badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+  .badge.ok { background: rgba(52,208,88,0.15); color: #34D058; }
+  .badge.high { background: rgba(248,81,73,0.15); color: #F85149; }
+  .badge.low { background: rgba(240,192,64,0.15); color: #F0C040; }
+
+  footer {
+    text-align: center;
+    padding: 2rem 0 1rem;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    letter-spacing: 1px;
+  }
+  footer a { color: var(--tec-sky); text-decoration: none; }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .chart-section { grid-template-columns: 1fr; }
+    .config-panel { flex-direction: column; align-items: stretch; }
+    .config-field input { width: 100%; }
+    .metric-value { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="logo-group">
+      <div class="logo-icon">💡</div>
+      <div class="logo-text">
+        <h1>Luraxómetro</h1>
+        <p>Luminance Monitor</p>
+      </div>
+    </div>
+    <div class="connection-status">
+      <div class="status-dot" id="statusDot"></div>
+      <span id="statusText">Desconectado</span>
+    </div>
+  </header>
+
+  <!-- Config -->
+  <div class="config-panel">
+    <div class="config-field">
+      <label>Channel ID</label>
+      <input type="text" id="channelId" placeholder="ej. 2912345">
+    </div>
+    <div class="config-field">
+      <label>Read API Key</label>
+      <input type="text" id="apiKey" placeholder="ej. ABCD1234EFGH5678">
+    </div>
+    <div class="config-field">
+      <label>Min (cd/m²)</label>
+      <input type="number" id="threshMin" value="80" step="1">
+    </div>
+    <div class="config-field">
+      <label>Max (cd/m²)</label>
+      <input type="number" id="threshMax" value="110" step="1">
+    </div>
+    <button class="btn-connect" id="btnConnect">Conectar</button>
+  </div>
+
+  <!-- Metrics -->
+  <div class="metrics">
+    <div class="metric-card">
+      <div class="metric-label">LDR Sensor</div>
+      <div class="metric-value" id="ldrValue">—<span class="unit">cd/m²</span></div>
+      <div class="metric-sub" id="ldrSub">Esperando datos…</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">VEML7700 Precision</div>
+      <div class="metric-value" id="vemlValue">—<span class="unit">cd/m²</span></div>
+      <div class="metric-sub" id="vemlSub">Esperando datos…</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Δ Sensores</div>
+      <div class="metric-value" id="deltaValue">—<span class="unit">cd/m²</span></div>
+      <div class="metric-sub" id="deltaSub">|LDR − VEML|</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Estado</div>
+      <div class="status-card">
+        <div class="status-lamp" id="statusLamp"></div>
+        <div class="status-text" id="statusWord">Standby</div>
+      </div>
+      <div class="metric-sub" id="statusRange">Rango: 80 – 110 cd/m²</div>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="chart-section">
+    <div class="chart-panel">
+      <h3>Serie de Tiempo</h3>
+      <div class="chart-container"><canvas id="timeChart"></canvas></div>
+    </div>
+    <div class="chart-panel">
+      <h3>Comparación de Sensores</h3>
+      <div class="chart-container"><canvas id="compChart"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Feed log -->
+  <div class="feed-log">
+    <h3>Últimas lecturas</h3>
+    <table class="log-table">
+      <thead>
+        <tr><th>Hora</th><th>LDR (cd/m²)</th><th>VEML (cd/m²)</th><th>Estado</th></tr>
+      </thead>
+      <tbody id="logBody"></tbody>
+    </table>
+  </div>
+
+  <footer>
+    Tecnológico de Monterrey · Luraxómetro · Datos vía <a href="https://thingspeak.com" target="_blank">ThingSpeak</a>
+  </footer>
+</div>
+
+<script>
+// ─── State ─────────────────────────────────────────────
+let polling = null;
+let channelId = '';
+let apiKey = '';
+let threshMin = 80;
+let threshMax = 110;
+let lastEntryId = null;
+
+const MAX_POINTS = 200;
+const POLL_INTERVAL = 16000; // 16s (ThingSpeak free ≥ 15s)
+
+const timeData = { labels: [], ldr: [], veml: [] };
+const compData = { ldr: [], veml: [] };
+
+// ─── DOM refs ──────────────────────────────────────────
+const $ = id => document.getElementById(id);
+
+// ─── Charts ────────────────────────────────────────────
+Chart.defaults.color = '#8BA4BE';
+Chart.defaults.borderColor = 'rgba(0,141,186,0.1)';
+Chart.defaults.font.family = "'JetBrains Mono', monospace";
+Chart.defaults.font.size = 11;
+
+const timeChart = new Chart($('timeChart'), {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [
+      {
+        label: 'LDR',
+        data: [],
+        borderColor: '#008DBA',
+        backgroundColor: 'rgba(0,141,186,0.08)',
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: true,
+        tension: 0.3,
+      },
+      {
+        label: 'VEML7700',
+        data: [],
+        borderColor: '#00C9DB',
+        backgroundColor: 'rgba(0,201,219,0.06)',
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: true,
+        tension: 0.3,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    scales: {
+      x: { title: { display: true, text: 'Hora' }, ticks: { maxTicksLimit: 8 } },
+      y: { title: { display: true, text: 'cd/m²' }, beginAtZero: false }
+    },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle' } },
+      annotation: {} // thresholds drawn manually
+    }
+  }
+});
+
+const compChart = new Chart($('compChart'), {
+  type: 'scatter',
+  data: {
+    datasets: [
+      {
+        label: 'Mediciones',
+        data: [],
+        backgroundColor: 'rgba(0,201,219,0.6)',
+        borderColor: '#00C9DB',
+        pointRadius: 4,
+      },
+      {
+        label: 'Ideal 1:1',
+        data: [],
+        type: 'line',
+        borderColor: 'rgba(255,255,255,0.25)',
+        borderDash: [6, 4],
+        borderWidth: 1.5,
+        pointRadius: 0,
+        fill: false,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: { title: { display: true, text: 'LDR (cd/m²)' } },
+      y: { title: { display: true, text: 'VEML7700 (cd/m²)' } }
+    },
+    plugins: {
+      legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle' } }
+    }
+  }
+});
+
+// ─── Helpers ───────────────────────────────────────────
+function evaluateStatus(veml) {
+  if (veml > threshMax) return { status: 'high', label: 'Alto', cls: 'high' };
+  if (veml < threshMin) return { status: 'low', label: 'Bajo', cls: 'low' };
+  return { status: 'ok', label: 'OK', cls: 'ok' };
+}
+
+function formatTime(isoStr) {
+  const d = new Date(isoStr);
+  return d.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
+
+function updateIdealLine() {
+  const all = [...compData.ldr, ...compData.veml].filter(v => !isNaN(v));
+  if (all.length === 0) return;
+  const lo = Math.min(...all) * 0.9;
+  const hi = Math.max(...all) * 1.1;
+  compChart.data.datasets[1].data = [{ x: lo, y: lo }, { x: hi, y: hi }];
+}
+
+// ─── Feed parsing ──────────────────────────────────────
+async function fetchFeeds(numResults) {
+  let url = `https://api.thingspeak.com/channels/${channelId}/feeds.json?results=${numResults}`;
+  if (apiKey) url += `&api_key=${apiKey}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function pollOnce() {
+  try {
+    const json = await fetchFeeds(1);
+    const feed = json.feeds?.[0];
+    if (!feed || feed.entry_id === lastEntryId) return;
+    lastEntryId = feed.entry_id;
+
+    const ldr = parseFloat(feed.field1);
+    const veml = parseFloat(feed.field2);
+    if (isNaN(ldr) || isNaN(veml)) return;
+
+    const timeLabel = formatTime(feed.created_at);
+    const { label, cls } = evaluateStatus(veml);
+    const delta = Math.abs(ldr - veml);
+
+    // Update metric cards
+    $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">cd/m²</span>`;
+    $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">cd/m²</span>`;
+    $('deltaValue').innerHTML = `${delta.toFixed(2)}<span class="unit">cd/m²</span>`;
+    $('ldrSub').textContent = `@ ${timeLabel}`;
+    $('vemlSub').textContent = `@ ${timeLabel}`;
+
+    $('statusLamp').className = `status-lamp ${cls}`;
+    $('statusWord').textContent = label;
+
+    // Time chart
+    timeData.labels.push(timeLabel);
+    timeData.ldr.push(ldr);
+    timeData.veml.push(veml);
+    if (timeData.labels.length > MAX_POINTS) {
+      timeData.labels.shift(); timeData.ldr.shift(); timeData.veml.shift();
+    }
+    timeChart.data.labels = timeData.labels;
+    timeChart.data.datasets[0].data = timeData.ldr;
+    timeChart.data.datasets[1].data = timeData.veml;
+    timeChart.update('none');
+
+    // Comp chart
+    compData.ldr.push(ldr);
+    compData.veml.push(veml);
+    if (compData.ldr.length > MAX_POINTS) { compData.ldr.shift(); compData.veml.shift(); }
+    compChart.data.datasets[0].data = compData.ldr.map((x, i) => ({ x, y: compData.veml[i] }));
+    updateIdealLine();
+    compChart.update('none');
+
+    // Log table (prepend, max 20 rows)
+    const tbody = $('logBody');
+    const row = tbody.insertRow(0);
+    row.innerHTML = `<td>${timeLabel}</td><td>${ldr.toFixed(4)}</td><td>${veml.toFixed(4)}</td><td><span class="badge ${cls}">${label}</span></td>`;
+    while (tbody.rows.length > 20) tbody.deleteRow(tbody.rows.length - 1);
+
+    // Connection status
+    $('statusDot').classList.add('live');
+    $('statusText').textContent = `Live · ${timeLabel}`;
+
+  } catch (err) {
+    console.error('Poll error:', err);
+    $('statusDot').classList.remove('live');
+    $('statusText').textContent = `Error: ${err.message}`;
+  }
+}
+
+// ─── Backfill on connect ───────────────────────────────
+async function backfill() {
+  try {
+    const json = await fetchFeeds(50);
+    const feeds = json.feeds || [];
+    for (const feed of feeds) {
+      const ldr = parseFloat(feed.field1);
+      const veml = parseFloat(feed.field2);
+      if (isNaN(ldr) || isNaN(veml)) continue;
+
+      const t = formatTime(feed.created_at);
+      timeData.labels.push(t);
+      timeData.ldr.push(ldr);
+      timeData.veml.push(veml);
+      compData.ldr.push(ldr);
+      compData.veml.push(veml);
+
+      // Log the last 20
+      lastEntryId = feed.entry_id;
+    }
+
+    // Trim
+    while (timeData.labels.length > MAX_POINTS) {
+      timeData.labels.shift(); timeData.ldr.shift(); timeData.veml.shift();
+    }
+    while (compData.ldr.length > MAX_POINTS) { compData.ldr.shift(); compData.veml.shift(); }
+
+    // Update charts
+    timeChart.data.labels = timeData.labels;
+    timeChart.data.datasets[0].data = timeData.ldr;
+    timeChart.data.datasets[1].data = timeData.veml;
+    timeChart.update();
+
+    compChart.data.datasets[0].data = compData.ldr.map((x, i) => ({ x, y: compData.veml[i] }));
+    updateIdealLine();
+    compChart.update();
+
+    // Populate last entries in log
+    const tbody = $('logBody');
+    const recent = feeds.slice(-20);
+    for (const feed of recent) {
+      const ldr = parseFloat(feed.field1);
+      const veml = parseFloat(feed.field2);
+      if (isNaN(ldr) || isNaN(veml)) continue;
+      const { label, cls } = evaluateStatus(veml);
+      const row = tbody.insertRow(0);
+      row.innerHTML = `<td>${formatTime(feed.created_at)}</td><td>${ldr.toFixed(4)}</td><td>${veml.toFixed(4)}</td><td><span class="badge ${cls}">${label}</span></td>`;
+    }
+
+    // Set current values
+    if (feeds.length > 0) {
+      const last = feeds[feeds.length - 1];
+      const ldr = parseFloat(last.field1);
+      const veml = parseFloat(last.field2);
+      const t = formatTime(last.created_at);
+      const { label, cls } = evaluateStatus(veml);
+      $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">cd/m²</span>`;
+      $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">cd/m²</span>`;
+      $('deltaValue').innerHTML = `${Math.abs(ldr - veml).toFixed(2)}<span class="unit">cd/m²</span>`;
+      $('ldrSub').textContent = `@ ${t}`;
+      $('vemlSub').textContent = `@ ${t}`;
+      $('statusLamp').className = `status-lamp ${cls}`;
+      $('statusWord').textContent = label;
+      $('statusDot').classList.add('live');
+      $('statusText').textContent = `Live · ${t}`;
+    }
+  } catch (err) {
+    console.error('Backfill error:', err);
+  }
+}
+
+// ─── Connect button ────────────────────────────────────
+$('btnConnect').addEventListener('click', async () => {
+  channelId = $('channelId').value.trim();
+  apiKey = $('apiKey').value.trim();
+  threshMin = parseFloat($('threshMin').value) || 80;
+  threshMax = parseFloat($('threshMax').value) || 110;
+  $('statusRange').textContent = `Rango: ${threshMin} – ${threshMax} cd/m²`;
+
+  if (!channelId) { alert('Ingresa un Channel ID'); return; }
+
+  // Reset
+  if (polling) clearInterval(polling);
+  timeData.labels = []; timeData.ldr = []; timeData.veml = [];
+  compData.ldr = []; compData.veml = [];
+  lastEntryId = null;
+  $('logBody').innerHTML = '';
+  $('statusText').textContent = 'Conectando…';
+
+  await backfill();
+  polling = setInterval(pollOnce, POLL_INTERVAL);
+});
+
+// ─── Save config in URL hash ───────────────────────────
+function loadFromHash() {
+  const params = new URLSearchParams(window.location.hash.slice(1));
+  if (params.get('ch')) $('channelId').value = params.get('ch');
+  if (params.get('key')) $('apiKey').value = params.get('key');
+  if (params.get('min')) $('threshMin').value = params.get('min');
+  if (params.get('max')) $('threshMax').value = params.get('max');
+  if (params.get('ch')) $('btnConnect').click();
+}
+loadFromHash();
+</script>
+</body>
+</html>
