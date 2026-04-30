@@ -312,7 +312,7 @@
     .app { padding: 1.5rem 1rem; }
   }
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://njs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-adapter-date-fns/3.0.0/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 <body>
@@ -505,7 +505,7 @@ const timeChart = new Chart($('timeChart'), {
     responsive: true,
     maintainAspectRatio: false,
     interaction: { mode: 'index', intersect: false },
-    scales: lxScales('Hora', 'Luminancia [cd/m²]'),
+    scales: lxScales('Hora', 'Luminancia [nits]'),
     plugins: { legend: lxLegend() },
     animation: { duration: 0 },
   }
@@ -540,7 +540,7 @@ const compChart = new Chart($('compChart'), {
   options: {
     responsive: true,
     maintainAspectRatio: false,
-    scales: lxScales('LDR [cd/m²]', 'VEML7700 [cd/m²]'),
+    scales: lxScales('LDR [nits]', 'VEML7700 [nits]'),
     plugins: { legend: lxLegend() },
     animation: { duration: 0 },
   }
@@ -589,9 +589,9 @@ async function pollOnce() {
     const { label, cls } = evaluateStatus(veml);
     const delta = Math.abs(ldr - veml);
 
-    $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">cd/m²</span>`;
-    $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">cd/m²</span>`;
-    $('deltaValue').innerHTML = `${delta.toFixed(2)}<span class="unit">cd/m²</span>`;
+    $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">nits</span>`;
+    $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">nits</span>`;
+    $('deltaValue').innerHTML = `${delta.toFixed(2)}<span class="unit">nits</span>`;
     $('ldrSub').textContent = `@ ${timeLabel}`;
     $('vemlSub').textContent = `@ ${timeLabel}`;
 
@@ -680,9 +680,9 @@ async function backfill() {
       const veml = parseFloat(last.field2);
       const t = formatTime(last.created_at);
       const { label, cls } = evaluateStatus(veml);
-      $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">cd/m²</span>`;
-      $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">cd/m²</span>`;
-      $('deltaValue').innerHTML = `${Math.abs(ldr - veml).toFixed(2)}<span class="unit">cd/m²</span>`;
+      $('ldrValue').innerHTML = `${ldr.toFixed(2)}<span class="unit">nits</span>`;
+      $('vemlValue').innerHTML = `${veml.toFixed(2)}<span class="unit">nits</span>`;
+      $('deltaValue').innerHTML = `${Math.abs(ldr - veml).toFixed(2)}<span class="unit">nits</span>`;
       $('ldrSub').textContent = `@ ${t}`;
       $('vemlSub').textContent = `@ ${t}`;
       $('statusLamp').className = `status-lamp ${cls}`;
@@ -700,7 +700,7 @@ $('btnConnect').addEventListener('click', async () => {
   apiKey = $('apiKey').value.trim();
   threshMin = parseFloat($('threshMin').value) || 80;
   threshMax = parseFloat($('threshMax').value) || 110;
-  $('statusRange').textContent = `Rango: ${threshMin} – ${threshMax} cd/m²`;
+  $('statusRange').textContent = `Rango: ${threshMin} – ${threshMax} nits²`;
 
   if (!channelId) { alert('Ingresa un Channel ID'); return; }
 
